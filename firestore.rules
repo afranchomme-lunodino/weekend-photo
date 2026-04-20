@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Équipes : lecture libre, écriture réservée au panneau admin (pas d'auth ici)
+    match /teams/{teamId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Photos : lecture libre, création libre (upload équipe), pas de suppression publique
+    match /photos/{photoId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['teamId','teamName','url','deviceId','votes','uploadedAt']);
+      // Seule mise à jour autorisée : incrémenter votes (via batch vote)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']);
+      allow delete: if false;
+    }
+
+    // Votes : lecture/création libre, pas de modification ni suppression
+    match /votes/{voteId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['deviceId','photoId','teamId','votedAt']);
+      allow update, delete: if false;
+    }
+
+    // Paramètres globaux (votingOpen)
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
