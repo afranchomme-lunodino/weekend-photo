@@ -9,6 +9,12 @@ import { UploadZone } from './components/UploadZone';
 import { Scoreboard } from './components/Scoreboard';
 import { DownloadAll } from './components/DownloadAll';
 import { AdminPanel } from './components/AdminPanel';
+import { Slideshow } from './components/Slideshow';
+
+const params = new URLSearchParams(window.location.search);
+const isSlideshow = params.has('slideshow');
+const isAdmin     = params.has('admin');
+const teamParam   = params.get('team');
 
 function useSettings() {
   const [settings, setSettings] = useState(null);
@@ -24,16 +30,18 @@ async function toggleVoting(current) {
   await setDoc(doc(db, 'settings', 'main'), { votingOpen: !current });
 }
 
-export default function App() {
-  const params = new URLSearchParams(window.location.search);
-  const teamParam = params.get('team');
-  const isAdmin = params.has('admin');
-  const [tab, setTab] = useState('gallery');
+// Diaporama — aucun hook de l'app principale nécessaire
+function SlideshowPage() {
+  return <Slideshow />;
+}
+
+function MainApp() {
+  const [tab, setTab]       = useState('gallery');
   const [filter, setFilter] = useState('all');
 
-  const { teams } = useTeams();
-  const { photos } = usePhotos();
-  const settings = useSettings();
+  const { teams }   = useTeams();
+  const { photos }  = usePhotos();
+  const settings    = useSettings();
   const currentTeam = teams.find(t => t.id === teamParam) ?? null;
   const { votesLeft, votedPhotoIds, vote } = useVotes(currentTeam?.id);
 
@@ -136,4 +144,9 @@ export default function App() {
       )}
     </div>
   );
+}
+
+export default function App() {
+  if (isSlideshow) return <SlideshowPage />;
+  return <MainApp />;
 }
