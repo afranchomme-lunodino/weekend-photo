@@ -1,8 +1,18 @@
 import { useState } from 'react';
 import {
   collection, doc, setDoc, deleteDoc, serverTimestamp,
+  addDoc, getDocs, writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+
+const TEST_PHOTOS = [
+  { seed: 10, teamKey: 0 }, { seed: 20, teamKey: 1 }, { seed: 30, teamKey: 2 },
+  { seed: 40, teamKey: 3 }, { seed: 50, teamKey: 4 }, { seed: 60, teamKey: 5 },
+  { seed: 70, teamKey: 6 }, { seed: 11, teamKey: 0 }, { seed: 21, teamKey: 1 },
+  { seed: 31, teamKey: 2 }, { seed: 41, teamKey: 3 }, { seed: 51, teamKey: 4 },
+  { seed: 61, teamKey: 5 }, { seed: 71, teamKey: 6 }, { seed: 12, teamKey: 0 },
+  { seed: 22, teamKey: 1 }, { seed: 32, teamKey: 2 }, { seed: 42, teamKey: 3 },
+];
 import { useTeams } from '../hooks/useTeams';
 import { usePhotos } from '../hooks/usePhotos';
 
@@ -26,8 +36,46 @@ export function AdminPanel({ settings, onToggleVoting }) {
   const [newTeam, setNewTeam] = useState('');
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState('');
+  const [testBusy, setTestBusy] = useState('');
 
   const baseUrl = window.location.origin + window.location.pathname;
+
+  async function createTestData() {
+    setTestBusy('Création des équipes…');
+    const teamList = [];
+    for (const name of DEFAULT_TEAMS) {
+      const id = slugify(name);
+      await setDoc(doc(db, 'teams', id), { name, createdAt: serverTimestamp() });
+      teamList.push({ id, name });
+    }
+    setTestBusy('Ajout des photos de test…');
+    for (const p of TEST_PHOTOS) {
+      const team = teamList[p.teamKey];
+      await addDoc(collection(db, 'photos'), {
+        teamId:   team.id,
+        teamName: team.name,
+        url:      `https://picsum.photos/seed/${p.seed}/800/800`,
+        deviceId: 'test-device',
+        votes:    Math.floor(Math.random() * 6),
+        uploadedAt: serverTimestamp(),
+      });
+    }
+    setTestBusy('');
+  }
+
+  async function clearAllData() {
+    if (!window.confirm('Effacer TOUTES les photos et tous les votes ? (Les équipes sont conservées)')) return;
+    setTestBusy('Suppression…');
+    const batch = writeBatch(db);
+    const [photosSnap, votesSnap] = await Promise.all([
+      getDocs(collection(db, 'photos')),
+      getDocs(collection(db, 'votes')),
+    ]);
+    photosSnap.docs.forEach(d => batch.delete(d.ref));
+    votesSnap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    setTestBusy('');
+  }
 
   async function createTeam(name) {
     const trimmed = name.trim();
@@ -63,6 +111,31 @@ export function AdminPanel({ settings, onToggleVoting }) {
   return (
     <div className="admin-panel">
       <h1>⚙️ Administration</h1>
+
+      {/* Test data */}
+      <section className="admin-section test-section">
+        <h2>🧪 Mode test</h2>
+        <p className="status-hint" style={{ marginBottom: 12 }}>
+          Peuple l'app avec de fausses photos pour tester avant le jour J.
+          Pense à tout effacer avant d'envoyer les vrais liens !
+        </p>
+        <div className="test-btn-row">
+          <button
+            className="test-create-btn"
+            onClick={createTestData}
+            disabled={!!testBusy}
+          >
+            {testBusy || '🎲 Créer données de test'}
+          </button>
+          <button
+            className="test-clear-btn"
+            onClick={clearAllData}
+            disabled={!!testBusy}
+          >
+            🗑 Tout effacer
+          </button>
+        </div>
+      </section>
 
       {/* Votes control */}
       <section className="admin-section">

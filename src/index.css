@@ -59,6 +59,20 @@ a      { color: var(--accent); }
   justify-content: space-between;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo {
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+}
+
 .app-header h1 {
   font-size: 1.2rem;
   font-weight: 700;
@@ -432,6 +446,38 @@ a      { color: var(--accent); }
   font-size: 0.78rem;
   margin-bottom: 14px;
 }
+
+.test-section { border-left: 4px solid #f39c12; }
+
+.test-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.test-create-btn {
+  flex: 1;
+  padding: 12px;
+  background: #f39c12;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.test-create-btn:disabled { opacity: 0.6; cursor: default; }
+
+.test-clear-btn {
+  padding: 12px 14px;
+  background: var(--bg);
+  color: #c0392b;
+  border: 1.5px solid #c0392b;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.test-clear-btn:hover:not(:disabled) { background: #ffeaea; }
+.test-clear-btn:disabled { opacity: 0.5; cursor: default; }
 
 .toggle-vote-btn {
   width: 100%;

@@ -62,7 +62,10 @@ function MainApp() {
     <div className="app">
       <header className="app-header">
         <div className="header-top">
-          <h1>📸 Weekend Photo</h1>
+          <div className="header-brand">
+            <img src="/logo.svg" alt="LPTR Family" className="header-logo" />
+            <h1>Weekend Photo</h1>
+          </div>
           {settings?.votingOpen && currentTeam && (
             <div className="votes-badge">
               {votesLeft} vote{votesLeft !== 1 ? 's' : ''}
