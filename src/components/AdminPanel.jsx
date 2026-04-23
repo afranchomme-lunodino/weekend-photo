@@ -110,7 +110,10 @@ export function AdminPanel({ settings, onToggleVoting }) {
 
   return (
     <div className="admin-panel">
-      <h1>⚙️ Administration</h1>
+      <div className="admin-header">
+        <h1>⚙️ Administration</h1>
+        <a href="/?qrcodes" className="qr-link-btn">📱 QR Codes</a>
+      </div>
 
       {/* Test data */}
       <section className="admin-section test-section">

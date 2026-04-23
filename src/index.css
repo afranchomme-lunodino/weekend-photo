@@ -424,10 +424,130 @@ a      { color: var(--accent); }
   padding: 20px 16px 40px;
 }
 
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
 .admin-panel h1 {
   font-size: 1.4rem;
   font-weight: 700;
+}
+
+.qr-link-btn {
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── QR Codes page ──────────────────────────────────────────── */
+.qr-root {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+.qr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qr-toolbar h1 { font-size: 1.3rem; font-weight: 700; }
+
+.qr-toolbar-actions { display: flex; gap: 10px; align-items: center; }
+
+.qr-print-btn {
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.qr-back-btn {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.qr-hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
   margin-bottom: 20px;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.qr-card {
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  break-inside: avoid;
+}
+
+.qr-card-logo {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.3px;
+}
+
+.qr-team-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #000;
+  line-height: 1.1;
+}
+
+.qr-code-wrap {
+  padding: 4px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.qr-url {
+  font-size: 0.62rem;
+  color: #888;
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.qr-loading, .qr-empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+/* Impression */
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .qr-root { padding: 0; max-width: 100%; }
+  .qr-grid { gap: 12px; }
+  .qr-card { border: 1.5px solid #000; break-inside: avoid; }
 }
 
 .admin-section {

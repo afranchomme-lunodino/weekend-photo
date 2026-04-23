@@ -10,10 +10,12 @@ import { Scoreboard } from './components/Scoreboard';
 import { DownloadAll } from './components/DownloadAll';
 import { AdminPanel } from './components/AdminPanel';
 import { Slideshow } from './components/Slideshow';
+import { QRPage } from './components/QRPage';
 
 const params = new URLSearchParams(window.location.search);
 const isSlideshow = params.has('slideshow');
 const isAdmin     = params.has('admin');
+const isQR        = params.has('qrcodes');
 const teamParam   = params.get('team');
 
 function useSettings() {
@@ -154,5 +156,6 @@ function MainApp() {
 
 export default function App() {
   if (isSlideshow) return <SlideshowPage />;
+  if (isQR)        return <QRPage />;
   return <MainApp />;
 }
