@@ -623,6 +623,44 @@ a      { color: var(--accent); }
   letter-spacing: 0.5px;
 }
 
+/* ─── Delete photo button ────────────────────────────────────── */
+.delete-photo-btn {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: rgba(192,57,43,0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  border-radius: 50%;
+  width: 30px; height: 30px;
+  font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 5;
+}
+.delete-photo-btn:active { transform: scale(0.9); background: rgba(192,57,43,1); }
+.photo-card.deleting { opacity: 0.4; pointer-events: none; transition: opacity 0.3s; }
+
+/* ─── Upload counter ─────────────────────────────────────────── */
+.photo-counter {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 2;
+}
+.counter-warn { background: rgba(230,126,34,0.85); }
+.counter-full { background: rgba(39,174,96,0.85); }
+.upload-zone { position: relative; }
+.upload-zone.full { border-color: #27ae60; cursor: default; }
+
 /* ─── Lightbox ───────────────────────────────────────────────── */
 .lb-hint {
   position: absolute;

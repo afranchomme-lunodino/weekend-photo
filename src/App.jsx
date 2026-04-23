@@ -79,7 +79,10 @@ function MainApp() {
 
       {currentTeam && (
         <div className="upload-section">
-          <UploadZone team={currentTeam} />
+          <UploadZone
+            team={currentTeam}
+            teamPhotoCount={photos.filter(p => p.teamId === currentTeam.id).length}
+          />
         </div>
       )}
 

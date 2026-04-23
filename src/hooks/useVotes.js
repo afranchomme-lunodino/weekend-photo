@@ -6,7 +6,7 @@ import {
 import { db } from '../lib/firebase';
 import { getDeviceId } from '../lib/deviceId';
 
-const MAX_VOTES = 3;
+const MAX_VOTES = 10;
 
 export function useVotes(myTeamId) {
   const [myVotes, setMyVotes] = useState([]);
