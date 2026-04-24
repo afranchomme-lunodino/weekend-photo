@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db } from './lib/firebase';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTeams } from './hooks/useTeams';
 import { usePhotos } from './hooks/usePhotos';
 import { useVotes } from './hooks/useVotes';
+import { useSettings } from './hooks/useSettings';
 import { PhotoCard } from './components/PhotoCard';
 import { UploadZone } from './components/UploadZone';
 import { Scoreboard } from './components/Scoreboard';
@@ -11,75 +10,108 @@ import { DownloadAll } from './components/DownloadAll';
 import { AdminPanel } from './components/AdminPanel';
 import { Slideshow } from './components/Slideshow';
 import { QRPage } from './components/QRPage';
+import { PodiumReveal } from './components/PodiumReveal';
 
-const params = new URLSearchParams(window.location.search);
+const params     = new URLSearchParams(window.location.search);
 const isSlideshow = params.has('slideshow');
-const isAdmin     = params.has('admin');
-const isQR        = params.has('qrcodes');
-const teamParam   = params.get('team');
+const isAdmin    = params.has('admin');
+const isQR       = params.has('qrcodes');
+const isPodium   = params.has('podium');
+const teamParam  = params.get('team');
 
-function useSettings() {
-  const [settings, setSettings] = useState(null);
+/* ── Countdown hook ─────────────────────────────────────────────── */
+function useCountdown(phaseEndTime) {
+  const [display, setDisplay] = useState('');
   useEffect(() => {
-    return onSnapshot(doc(db, 'settings', 'main'), (snap) => {
-      setSettings(snap.exists() ? snap.data() : { votingOpen: false });
-    });
-  }, []);
-  return settings;
+    if (!phaseEndTime) { setDisplay(''); return; }
+    const tick = () => {
+      const diff = phaseEndTime - Date.now();
+      if (diff <= 0) { setDisplay('0:00'); return; }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setDisplay(`${m}:${s.toString().padStart(2, '0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [phaseEndTime]);
+  return display;
 }
 
-async function toggleVoting(current) {
-  await setDoc(doc(db, 'settings', 'main'), { votingOpen: !current });
-}
-
-// Diaporama — aucun hook de l'app principale nécessaire
-function SlideshowPage() {
-  return <Slideshow />;
-}
-
+/* ── Main App ───────────────────────────────────────────────────── */
 function MainApp() {
-  const [tab, setTab]       = useState('gallery');
+  const [tab,    setTab]    = useState('gallery');
   const [filter, setFilter] = useState('all');
 
-  const { teams }   = useTeams();
-  const { photos }  = usePhotos();
-  const settings    = useSettings();
+  const { teams }                         = useTeams();
+  const { photos }                        = usePhotos();
+  const { phase, votingOpen, phaseEndTime } = useSettings();
+  const countdown                         = useCountdown(phaseEndTime);
   const currentTeam = teams.find(t => t.id === teamParam) ?? null;
-  const { votesLeft, votedPhotoIds, vote } = useVotes(currentTeam?.id);
+  const { votesLeft, votedPhotos, vote }  = useVotes(currentTeam?.id);
 
-  const displayedPhotos = filter === 'all'
-    ? photos
-    : photos.filter(p => p.teamId === filter);
-
-  if (isAdmin) {
-    return (
-      <AdminPanel
-        settings={settings}
-        onToggleVoting={() => toggleVoting(settings?.votingOpen)}
-      />
+  // Stable shuffle — each photo gets a random key the first time it's seen
+  const shuffleOrder = useRef({});
+  const galleryPhotos = useMemo(() => {
+    photos.forEach(p => {
+      if (!(p.id in shuffleOrder.current)) {
+        shuffleOrder.current[p.id] = Math.random();
+      }
+    });
+    return [...photos].sort(
+      (a, b) => shuffleOrder.current[a.id] - shuffleOrder.current[b.id]
     );
-  }
+  }, [photos]);
+
+  // "Mes photos" tab — own team only
+  const myPhotos = currentTeam
+    ? photos.filter(p => p.teamId === currentTeam.id)
+    : [];
+
+  // Filtered gallery
+  const displayedPhotos = filter === 'all'
+    ? galleryPhotos
+    : galleryPhotos.filter(p => p.teamId === filter);
+
+  // Phase label
+  const phaseLabel = {
+    upload:  '📷 Phase upload',
+    vote:    '🗳️ Votes ouverts',
+    results: '🏆 Résultats',
+  }[phase] ?? '';
+
+  if (isAdmin) return <AdminPanel />;
 
   return (
     <div className="app">
+      {/* ── Header ─────────────────────────────────────────────── */}
       <header className="app-header">
         <div className="header-top">
           <div className="header-brand">
             <img src="/logo.svg" alt="LPTR Family" className="header-logo" />
             <h1>Weekend Photo</h1>
           </div>
-          {settings?.votingOpen && currentTeam && (
+          {votingOpen && currentTeam && (
             <div className="votes-badge">
               {votesLeft} vote{votesLeft !== 1 ? 's' : ''}
             </div>
           )}
         </div>
+
         {currentTeam && (
           <div className="team-tag">{currentTeam.name}</div>
         )}
+
+        {phaseLabel && (
+          <div className={`phase-banner ${phase}`}>
+            <span>{phaseLabel}</span>
+            {countdown && <span className="countdown">⏱ {countdown}</span>}
+          </div>
+        )}
       </header>
 
-      {currentTeam && (
+      {/* ── Upload zone (upload phase only) ────────────────────── */}
+      {phase === 'upload' && currentTeam && (
         <div className="upload-section">
           <UploadZone
             team={currentTeam}
@@ -88,6 +120,16 @@ function MainApp() {
         </div>
       )}
 
+      {/* ── Phase message when upload is closed ────────────────── */}
+      {phase !== 'upload' && currentTeam && (
+        <div className="phase-msg">
+          {phase === 'vote'
+            ? '🗳️ Phase de vote — les dépôts sont fermés'
+            : '🏆 Concours terminé — merci à tous !'}
+        </div>
+      )}
+
+      {/* ── Tabs ───────────────────────────────────────────────── */}
       <nav className="tabs">
         <button
           className={tab === 'gallery' ? 'tab active' : 'tab'}
@@ -96,6 +138,17 @@ function MainApp() {
           Galerie
           <span className="tab-count">{photos.length}</span>
         </button>
+
+        {currentTeam && (
+          <button
+            className={tab === 'mine' ? 'tab active' : 'tab'}
+            onClick={() => setTab('mine')}
+          >
+            Mes photos
+            <span className="tab-count">{myPhotos.length}</span>
+          </button>
+        )}
+
         <button
           className={tab === 'scoreboard' ? 'tab active' : 'tab'}
           onClick={() => setTab('scoreboard')}
@@ -104,6 +157,7 @@ function MainApp() {
         </button>
       </nav>
 
+      {/* ── Gallery ────────────────────────────────────────────── */}
       {tab === 'gallery' && (
         <div className="gallery-view">
           {teams.length > 1 && (
@@ -128,9 +182,9 @@ function MainApp() {
                 photo={photo}
                 onVote={vote}
                 canVote={votesLeft > 0}
-                hasVoted={votedPhotoIds.includes(photo.id)}
+                myReaction={votedPhotos[photo.id]}
                 isOwnTeam={currentTeam?.id === photo.teamId}
-                votingOpen={settings?.votingOpen ?? false}
+                votingOpen={votingOpen}
               />
             ))}
             {displayedPhotos.length === 0 && (
@@ -145,6 +199,32 @@ function MainApp() {
         </div>
       )}
 
+      {/* ── Mes photos ─────────────────────────────────────────── */}
+      {tab === 'mine' && currentTeam && (
+        <div className="gallery-view">
+          <div className="gallery-grid">
+            {myPhotos.map(photo => (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                onVote={vote}
+                canVote={false}
+                myReaction={votedPhotos[photo.id]}
+                isOwnTeam={true}
+                votingOpen={false}
+              />
+            ))}
+            {myPhotos.length === 0 && (
+              <div className="empty-gallery">
+                <span>📷</span>
+                <p>Pas encore de photos pour votre équipe</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Scoreboard ─────────────────────────────────────────── */}
       {tab === 'scoreboard' && (
         <div className="scoreboard-view">
           <Scoreboard photos={photos} teams={teams} />
@@ -154,8 +234,10 @@ function MainApp() {
   );
 }
 
+/* ── Router ─────────────────────────────────────────────────────── */
 export default function App() {
-  if (isSlideshow) return <SlideshowPage />;
+  if (isSlideshow) return <Slideshow />;
   if (isQR)        return <QRPage />;
+  if (isPodium)    return <PodiumReveal />;
   return <MainApp />;
 }

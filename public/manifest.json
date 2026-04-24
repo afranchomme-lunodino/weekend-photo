@@ -1,0 +1,19 @@
+{
+  "name": "Weekend Photo LPTR Family",
+  "short_name": "Weekend Photo",
+  "description": "Concours photo inter-équipes du week-end LPTR Family",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f4f4",
+  "theme_color": "#ff6b35",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["photo", "entertainment", "social"]
+}

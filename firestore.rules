@@ -2,29 +2,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Équipes : lecture libre, écriture réservée au panneau admin (pas d'auth ici)
+    // Équipes : lecture/écriture libres (admin non authentifié)
     match /teams/{teamId} {
       allow read: if true;
       allow write: if true;
     }
 
-    // Photos : lecture libre, création libre (upload équipe), pas de suppression publique
+    // Photos : lecture libre, création validée, mise à jour votes+réactions, suppression libre
     match /photos/{photoId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['teamId','teamName','url','deviceId','votes','uploadedAt']);
-      // Seule mise à jour autorisée : incrémenter votes (via batch vote)
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']);
-      allow delete: if false;
+      allow create: if request.resource.data.keys().hasAll(
+        ['teamId','teamName','url','deviceId','votes','uploadedAt']
+      );
+      // Seules les clés votes et reactions peuvent être modifiées (incréments via batch vote)
+      allow update: if request.resource.data.diff(resource.data)
+                       .affectedKeys().hasOnly(['votes', 'reactions']);
+      // Les membres de l'équipe peuvent supprimer leurs propres photos
+      allow delete: if true;
     }
 
-    // Votes : lecture/création libre, pas de modification ni suppression
+    // Votes : lecture/création. ID déterministe imposé = deviceId_photoId (anti-double-vote côté serveur)
     match /votes/{voteId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['deviceId','photoId','teamId','votedAt']);
+      allow create: if request.resource.data.keys().hasAll(
+                       ['deviceId','photoId','teamId','reaction','votedAt']
+                    )
+                    && voteId == request.resource.data.deviceId + '_' + request.resource.data.photoId;
+      // Pas de modification ni suppression possible
       allow update, delete: if false;
     }
 
-    // Paramètres globaux (votingOpen)
+    // Paramètres globaux (phase, votingOpen, phaseEndTime)
     match /settings/{docId} {
       allow read: if true;
       allow write: if true;

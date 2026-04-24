@@ -4,6 +4,9 @@ import {
   addDoc, getDocs, writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useTeams } from '../hooks/useTeams';
+import { usePhotos } from '../hooks/usePhotos';
+import { useSettings } from '../hooks/useSettings';
 
 const TEST_PHOTOS = [
   { seed: 10, teamKey: 0 }, { seed: 20, teamKey: 1 }, { seed: 30, teamKey: 2 },
@@ -13,8 +16,6 @@ const TEST_PHOTOS = [
   { seed: 61, teamKey: 5 }, { seed: 71, teamKey: 6 }, { seed: 12, teamKey: 0 },
   { seed: 22, teamKey: 1 }, { seed: 32, teamKey: 2 }, { seed: 42, teamKey: 3 },
 ];
-import { useTeams } from '../hooks/useTeams';
-import { usePhotos } from '../hooks/usePhotos';
 
 const DEFAULT_TEAMS = [
   'Les Aigles', 'Les Loups', 'Les Renards', 'Les Lynx',
@@ -30,16 +31,20 @@ function slugify(str) {
     .replace(/[^a-z0-9-]/g, '');
 }
 
-export function AdminPanel({ settings, onToggleVoting }) {
-  const { teams } = useTeams();
+export function AdminPanel() {
+  const { teams }  = useTeams();
   const { photos } = usePhotos();
-  const [newTeam, setNewTeam] = useState('');
+  const { phase, phaseEndTime, setPhase, startTimer, clearTimer } = useSettings();
+
+  const [newTeam,  setNewTeam]  = useState('');
   const [creating, setCreating] = useState(false);
-  const [copied, setCopied] = useState('');
+  const [copied,   setCopied]   = useState('');
   const [testBusy, setTestBusy] = useState('');
+  const [timerMin, setTimerMin] = useState('10');
 
   const baseUrl = window.location.origin + window.location.pathname;
 
+  /* ── Test data ─────────────────────────────────────────────── */
   async function createTestData() {
     setTestBusy('Création des équipes…');
     const teamList = [];
@@ -52,11 +57,12 @@ export function AdminPanel({ settings, onToggleVoting }) {
     for (const p of TEST_PHOTOS) {
       const team = teamList[p.teamKey];
       await addDoc(collection(db, 'photos'), {
-        teamId:   team.id,
-        teamName: team.name,
-        url:      `https://picsum.photos/seed/${p.seed}/800/800`,
-        deviceId: 'test-device',
-        votes:    Math.floor(Math.random() * 6),
+        teamId:     team.id,
+        teamName:   team.name,
+        url:        `https://picsum.photos/seed/${p.seed}/800/800`,
+        deviceId:   'test-device',
+        votes:      Math.floor(Math.random() * 8),
+        reactions:  { h: Math.floor(Math.random()*4), f: Math.floor(Math.random()*3), w: Math.floor(Math.random()*2), l: Math.floor(Math.random()*2) },
         uploadedAt: serverTimestamp(),
       });
     }
@@ -77,6 +83,7 @@ export function AdminPanel({ settings, onToggleVoting }) {
     setTestBusy('');
   }
 
+  /* ── Teams ─────────────────────────────────────────────────── */
   async function createTeam(name) {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -94,7 +101,7 @@ export function AdminPanel({ settings, onToggleVoting }) {
   }
 
   async function deleteTeam(id) {
-    if (!window.confirm('Supprimer cette équipe et ses données ?')) return;
+    if (!window.confirm('Supprimer cette équipe ?')) return;
     await deleteDoc(doc(db, 'teams', id));
   }
 
@@ -108,6 +115,7 @@ export function AdminPanel({ settings, onToggleVoting }) {
 
   const totalVotes = photos.reduce((s, p) => s + (p.votes || 0), 0);
 
+  /* ── Render ────────────────────────────────────────────────── */
   return (
     <div className="admin-panel">
       <div className="admin-header">
@@ -115,48 +123,85 @@ export function AdminPanel({ settings, onToggleVoting }) {
         <a href="/?qrcodes" className="qr-link-btn">📱 QR Codes</a>
       </div>
 
+      {/* Phase du concours */}
+      <section className="admin-section phase-section">
+        <h2>🎯 Phase du concours</h2>
+        <div className="phase-btns">
+          <button
+            className={`phase-btn ${phase === 'upload' ? 'active' : ''}`}
+            onClick={() => setPhase('upload')}
+          >
+            📷<br />Upload
+          </button>
+          <button
+            className={`phase-btn ${phase === 'vote' ? 'active' : ''}`}
+            onClick={() => setPhase('vote')}
+          >
+            🗳️<br />Vote
+          </button>
+          <button
+            className={`phase-btn ${phase === 'results' ? 'active' : ''}`}
+            onClick={() => setPhase('results')}
+          >
+            🏆<br />Résultats
+          </button>
+        </div>
+
+        <p className="status-hint">
+          {phase === 'upload'  && '📷 Les équipes déposent leurs photos, votes désactivés'}
+          {phase === 'vote'    && '🗳️ Votes ouverts — plus de dépôt de photos possible'}
+          {phase === 'results' && '🏆 Concours terminé — révélez le podium !'}
+        </p>
+
+        {/* Chronomètre */}
+        <div className="timer-row">
+          <input
+            type="number"
+            className="timer-input"
+            value={timerMin}
+            onChange={e => setTimerMin(e.target.value)}
+            min="1" max="120"
+            placeholder="min"
+          />
+          <button
+            className="timer-start-btn"
+            onClick={() => startTimer(parseInt(timerMin, 10) || 10)}
+          >
+            ⏱ Démarrer
+          </button>
+          {phaseEndTime && (
+            <>
+              <button className="timer-clear-btn" onClick={clearTimer}>Annuler</button>
+              <span className="timer-active-label">⏱ Actif</span>
+            </>
+          )}
+        </div>
+
+        {/* Lien podium */}
+        {phase === 'results' && (
+          <a href="/?podium" target="_blank" rel="noreferrer" className="podium-link-btn">
+            🎬 Ouvrir le podium dramatique ↗
+          </a>
+        )}
+      </section>
+
       {/* Test data */}
       <section className="admin-section test-section">
         <h2>🧪 Mode test</h2>
         <p className="status-hint" style={{ marginBottom: 12 }}>
-          Peuple l'app avec de fausses photos pour tester avant le jour J.
-          Pense à tout effacer avant d'envoyer les vrais liens !
+          Peuple l'app avec de fausses photos. Efface avant d'envoyer les vrais liens !
         </p>
         <div className="test-btn-row">
-          <button
-            className="test-create-btn"
-            onClick={createTestData}
-            disabled={!!testBusy}
-          >
+          <button className="test-create-btn" onClick={createTestData} disabled={!!testBusy}>
             {testBusy || '🎲 Créer données de test'}
           </button>
-          <button
-            className="test-clear-btn"
-            onClick={clearAllData}
-            disabled={!!testBusy}
-          >
+          <button className="test-clear-btn" onClick={clearAllData} disabled={!!testBusy}>
             🗑 Tout effacer
           </button>
         </div>
       </section>
 
-      {/* Votes control */}
-      <section className="admin-section">
-        <h2>Votes</h2>
-        <button
-          className={`toggle-vote-btn ${settings?.votingOpen ? 'open' : 'closed'}`}
-          onClick={onToggleVoting}
-        >
-          {settings?.votingOpen ? '🔴 Fermer les votes' : '🟢 Ouvrir les votes'}
-        </button>
-        <p className="status-hint">
-          {settings?.votingOpen
-            ? '✅ Les participants peuvent voter'
-            : '⛔ Les votes sont désactivés'}
-        </p>
-      </section>
-
-      {/* Teams */}
+      {/* Équipes */}
       <section className="admin-section">
         <h2>Équipes ({teams.length})</h2>
 
@@ -169,7 +214,7 @@ export function AdminPanel({ settings, onToggleVoting }) {
         <div className="team-list">
           {teams.map(team => {
             const teamPhotos = photos.filter(p => p.teamId === team.id).length;
-            const teamVotes = photos
+            const teamVotes  = photos
               .filter(p => p.teamId === team.id)
               .reduce((s, p) => s + (p.votes || 0), 0);
             const link = `${baseUrl}?team=${team.id}`;
@@ -182,27 +227,13 @@ export function AdminPanel({ settings, onToggleVoting }) {
                   </div>
                   <div className="admin-link-row">
                     <span className="admin-link-text">?team={team.id}</span>
-                    <button
-                      className="copy-btn"
-                      onClick={() => copyLink(team.id)}
-                    >
+                    <button className="copy-btn" onClick={() => copyLink(team.id)}>
                       {copied === team.id ? '✓' : '📋'}
                     </button>
-                    <a
-                      href={link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="open-btn"
-                    >
-                      ↗
-                    </a>
+                    <a href={link} target="_blank" rel="noreferrer" className="open-btn">↗</a>
                   </div>
                 </div>
-                <button
-                  className="delete-team-btn"
-                  onClick={() => deleteTeam(team.id)}
-                  title="Supprimer"
-                >
+                <button className="delete-team-btn" onClick={() => deleteTeam(team.id)} title="Supprimer">
                   ✕
                 </button>
               </div>
@@ -228,7 +259,7 @@ export function AdminPanel({ settings, onToggleVoting }) {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats globales */}
       <section className="admin-section">
         <h2>Stats globales</h2>
         <div className="admin-stats-grid">
