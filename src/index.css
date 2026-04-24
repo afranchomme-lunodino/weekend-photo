@@ -45,7 +45,7 @@ a      { color: var(--accent); }
 /* ─── Header ─────────────────────────────────────────────────── */
 .app-header {
   background: var(--accent);
-  color: #fff;
+  color: var(--header-text, #fff);
   padding: 16px 16px 12px;
   position: sticky;
   top: 0;
@@ -68,9 +68,8 @@ a      { color: var(--accent); }
 .header-logo {
   width: 36px;
   height: 36px;
-  color: #fff;
   flex-shrink: 0;
-  filter: brightness(0) invert(1);
+  filter: var(--logo-filter, brightness(0) invert(1));
 }
 
 .app-header h1 {

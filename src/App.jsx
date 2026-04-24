@@ -12,15 +12,14 @@ import { Slideshow } from './components/Slideshow';
 import { QRPage } from './components/QRPage';
 import { PodiumReveal } from './components/PodiumReveal';
 
-// Palette de 7 couleurs vives — une par équipe (ordre alphabétique)
+// Palette par équipe (ordre alphabétique des équipes)
 const TEAM_COLORS = [
-  { accent: '#e74c3c', dark: '#c0392b', light: '#fdeaea', bg: '#fdf6f6' }, // Rouge
-  { accent: '#3498db', dark: '#2471a3', light: '#ebf5fb', bg: '#f4f9fd' }, // Bleu
-  { accent: '#27ae60', dark: '#1e8449', light: '#eafaf1', bg: '#f3fdf7' }, // Vert
-  { accent: '#8e44ad', dark: '#6c3483', light: '#f4ecf7', bg: '#faf5fc' }, // Violet
-  { accent: '#e67e22', dark: '#ca6f1e', light: '#fef5e7', bg: '#fdf8f0' }, // Orange
-  { accent: '#e91e8c', dark: '#c2186e', light: '#fce4f2', bg: '#fdf3f8' }, // Rose
-  { accent: '#16a085', dark: '#0e6655', light: '#e8f8f5', bg: '#f1fbf8' }, // Turquoise
+  { accent: '#e74c3c', dark: '#c0392b', light: '#fdeaea', bg: '#fdf6f6', headerText: '#fff' }, // 1 Rouge
+  { accent: '#2980b9', dark: '#1a5276', light: '#d6eaf8', bg: '#f0f6fc', headerText: '#fff' }, // 2 Bleu
+  { accent: '#27ae60', dark: '#1e8449', light: '#d5f5e3', bg: '#f0fdf6', headerText: '#fff' }, // 3 Vert
+  { accent: '#e67e22', dark: '#ca6f1e', light: '#fdebd0', bg: '#fdf6ee', headerText: '#fff' }, // 4 Orange
+  { accent: '#8e44ad', dark: '#6c3483', light: '#e8daef', bg: '#faf4fd', headerText: '#fff' }, // 5 Mauve
+  { accent: '#f1c40f', dark: '#d4ac0d', light: '#fef9e7', bg: '#fffef5', headerText: '#5a3e00', logoFilter: 'brightness(0) saturate(0) opacity(0.6)' }, // 6 Jaune
 ];
 
 const params     = new URLSearchParams(window.location.search);
@@ -51,6 +50,9 @@ function MainApp() {
     root.style.setProperty('--accent-dark',  color.dark);
     root.style.setProperty('--accent-light', color.light);
     root.style.setProperty('--bg',           color.bg);
+    root.style.setProperty('--header-text',  color.headerText);
+    if (color.logoFilter) root.style.setProperty('--logo-filter', color.logoFilter);
+    else root.style.removeProperty('--logo-filter');
     // Barre navigateur (Android Chrome / Safari)
     document.querySelector('meta[name="theme-color"]')
       ?.setAttribute('content', color.accent);
@@ -60,6 +62,8 @@ function MainApp() {
       root.style.removeProperty('--accent-dark');
       root.style.removeProperty('--accent-light');
       root.style.removeProperty('--bg');
+      root.style.removeProperty('--header-text');
+      root.style.removeProperty('--logo-filter');
       document.querySelector('meta[name="theme-color"]')
         ?.setAttribute('content', '#ff6b35');
     };
