@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTeams } from './hooks/useTeams';
 import { usePhotos } from './hooks/usePhotos';
 import { useVotes } from './hooks/useVotes';
@@ -11,6 +11,17 @@ import { AdminPanel } from './components/AdminPanel';
 import { Slideshow } from './components/Slideshow';
 import { QRPage } from './components/QRPage';
 import { PodiumReveal } from './components/PodiumReveal';
+
+// Palette de 7 couleurs vives — une par équipe (ordre alphabétique)
+const TEAM_COLORS = [
+  { accent: '#e74c3c', dark: '#c0392b', light: '#fdeaea', bg: '#fdf6f6' }, // Rouge
+  { accent: '#3498db', dark: '#2471a3', light: '#ebf5fb', bg: '#f4f9fd' }, // Bleu
+  { accent: '#27ae60', dark: '#1e8449', light: '#eafaf1', bg: '#f3fdf7' }, // Vert
+  { accent: '#8e44ad', dark: '#6c3483', light: '#f4ecf7', bg: '#faf5fc' }, // Violet
+  { accent: '#e67e22', dark: '#ca6f1e', light: '#fef5e7', bg: '#fdf8f0' }, // Orange
+  { accent: '#e91e8c', dark: '#c2186e', light: '#fce4f2', bg: '#fdf3f8' }, // Rose
+  { accent: '#16a085', dark: '#0e6655', light: '#e8f8f5', bg: '#f1fbf8' }, // Turquoise
+];
 
 const params     = new URLSearchParams(window.location.search);
 const isSlideshow = params.has('slideshow');
@@ -29,6 +40,30 @@ function MainApp() {
   const { votingOpen } = useSettings();
   const currentTeam = teams.find(t => t.id === teamParam) ?? null;
   const { votesLeft, votedPhotos, vote }  = useVotes(currentTeam?.id);
+
+  // Applique la couleur de l'équipe sur tout le thème CSS
+  useEffect(() => {
+    if (!currentTeam || teams.length === 0) return;
+    const idx   = teams.findIndex(t => t.id === currentTeam.id);
+    const color = TEAM_COLORS[idx % TEAM_COLORS.length];
+    const root  = document.documentElement;
+    root.style.setProperty('--accent',       color.accent);
+    root.style.setProperty('--accent-dark',  color.dark);
+    root.style.setProperty('--accent-light', color.light);
+    root.style.setProperty('--bg',           color.bg);
+    // Barre navigateur (Android Chrome / Safari)
+    document.querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', color.accent);
+    return () => {
+      // Restaure le thème par défaut si on quitte une vue équipe
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--accent-dark');
+      root.style.removeProperty('--accent-light');
+      root.style.removeProperty('--bg');
+      document.querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', '#ff6b35');
+    };
+  }, [currentTeam, teams]);
 
   // Stable shuffle — each photo gets a random key the first time it's seen
   const shuffleOrder = useRef({});
