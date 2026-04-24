@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useTeams } from './hooks/useTeams';
 import { usePhotos } from './hooks/usePhotos';
 import { useVotes } from './hooks/useVotes';
@@ -19,25 +19,6 @@ const isQR       = params.has('qrcodes');
 const isPodium   = params.has('podium');
 const teamParam  = params.get('team');
 
-/* ── Countdown hook ─────────────────────────────────────────────── */
-function useCountdown(phaseEndTime) {
-  const [display, setDisplay] = useState('');
-  useEffect(() => {
-    if (!phaseEndTime) { setDisplay(''); return; }
-    const tick = () => {
-      const diff = phaseEndTime - Date.now();
-      if (diff <= 0) { setDisplay('0:00'); return; }
-      const m = Math.floor(diff / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setDisplay(`${m}:${s.toString().padStart(2, '0')}`);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [phaseEndTime]);
-  return display;
-}
-
 /* ── Main App ───────────────────────────────────────────────────── */
 function MainApp() {
   const [tab,    setTab]    = useState('gallery');
@@ -45,8 +26,7 @@ function MainApp() {
 
   const { teams }                         = useTeams();
   const { photos }                        = usePhotos();
-  const { phase, votingOpen, phaseEndTime } = useSettings();
-  const countdown                         = useCountdown(phaseEndTime);
+  const { votingOpen } = useSettings();
   const currentTeam = teams.find(t => t.id === teamParam) ?? null;
   const { votesLeft, votedPhotos, vote }  = useVotes(currentTeam?.id);
 
@@ -73,13 +53,6 @@ function MainApp() {
     ? galleryPhotos
     : galleryPhotos.filter(p => p.teamId === filter);
 
-  // Phase label
-  const phaseLabel = {
-    upload:  '📷 Phase upload',
-    vote:    '🗳️ Votes ouverts',
-    results: '🏆 Résultats',
-  }[phase] ?? '';
-
   if (isAdmin) return <AdminPanel />;
 
   return (
@@ -102,30 +75,15 @@ function MainApp() {
           <div className="team-tag">{currentTeam.name}</div>
         )}
 
-        {phaseLabel && (
-          <div className={`phase-banner ${phase}`}>
-            <span>{phaseLabel}</span>
-            {countdown && <span className="countdown">⏱ {countdown}</span>}
-          </div>
-        )}
       </header>
 
-      {/* ── Upload zone (upload phase only) ────────────────────── */}
-      {phase === 'upload' && currentTeam && (
+      {/* ── Upload zone — toujours disponible ──────────────────── */}
+      {currentTeam && (
         <div className="upload-section">
           <UploadZone
             team={currentTeam}
             teamPhotoCount={photos.filter(p => p.teamId === currentTeam.id).length}
           />
-        </div>
-      )}
-
-      {/* ── Phase message when upload is closed ────────────────── */}
-      {phase !== 'upload' && currentTeam && (
-        <div className="phase-msg">
-          {phase === 'vote'
-            ? '🗳️ Phase de vote — les dépôts sont fermés'
-            : '🏆 Concours terminé — merci à tous !'}
         </div>
       )}
 
