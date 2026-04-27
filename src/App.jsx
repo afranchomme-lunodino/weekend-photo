@@ -20,6 +20,7 @@ const TEAM_COLORS = [
   { accent: '#e67e22', dark: '#ca6f1e', light: '#fdebd0', bg: '#fdf6ee', headerText: '#fff' }, // 4 Orange
   { accent: '#f1c40f', dark: '#d4ac0d', light: '#fef9e7', bg: '#fffef5', headerText: '#5a3e00', logoFilter: 'brightness(0) saturate(0) opacity(0.6)' }, // 5 Jaune
   { accent: '#e91e8c', dark: '#c2186e', light: '#fce4f2', bg: '#fdf3f9', headerText: '#fff' }, // 6 Fuschia
+  { accent: '#8e44ad', dark: '#6c3483', light: '#f4ecf7', bg: '#fdf8ff', headerText: '#fff', rainbow: true }, // 7 Arc-en-ciel
 ];
 
 const params     = new URLSearchParams(window.location.search);
@@ -53,17 +54,20 @@ function MainApp() {
     root.style.setProperty('--header-text',  color.headerText);
     if (color.logoFilter) root.style.setProperty('--logo-filter', color.logoFilter);
     else root.style.removeProperty('--logo-filter');
+    // Arc-en-ciel : classe spéciale sur le body
+    if (color.rainbow) document.body.classList.add('rainbow-team');
+    else document.body.classList.remove('rainbow-team');
     // Barre navigateur (Android Chrome / Safari)
     document.querySelector('meta[name="theme-color"]')
       ?.setAttribute('content', color.accent);
     return () => {
-      // Restaure le thème par défaut si on quitte une vue équipe
       root.style.removeProperty('--accent');
       root.style.removeProperty('--accent-dark');
       root.style.removeProperty('--accent-light');
       root.style.removeProperty('--bg');
       root.style.removeProperty('--header-text');
       root.style.removeProperty('--logo-filter');
+      document.body.classList.remove('rainbow-team');
       document.querySelector('meta[name="theme-color"]')
         ?.setAttribute('content', '#ff6b35');
     };
