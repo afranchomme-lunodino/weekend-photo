@@ -28,8 +28,9 @@ service cloud.firestore {
                        ['deviceId','photoId','teamId','reaction','votedAt']
                     )
                     && voteId == request.resource.data.deviceId + '_' + request.resource.data.photoId;
-      // Pas de modification ni suppression possible
-      allow update, delete: if false;
+      // Pas de modification possible, suppression autorisée (reset admin)
+      allow update: if false;
+      allow delete: if true;
     }
 
     // Paramètres globaux (phase, votingOpen, phaseEndTime)

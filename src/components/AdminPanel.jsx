@@ -72,14 +72,22 @@ export function AdminPanel() {
   async function clearAllData() {
     if (!window.confirm('Effacer TOUTES les photos et tous les votes ? (Les équipes sont conservées)')) return;
     setTestBusy('Suppression…');
-    const batch = writeBatch(db);
-    const [photosSnap, votesSnap] = await Promise.all([
-      getDocs(collection(db, 'photos')),
-      getDocs(collection(db, 'votes')),
-    ]);
-    photosSnap.docs.forEach(d => batch.delete(d.ref));
-    votesSnap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
+    try {
+      const [photosSnap, votesSnap] = await Promise.all([
+        getDocs(collection(db, 'photos')),
+        getDocs(collection(db, 'votes')),
+      ]);
+      const allDocs = [...photosSnap.docs, ...votesSnap.docs];
+      // Firestore limite à 500 opérations par batch
+      for (let i = 0; i < allDocs.length; i += 500) {
+        const batch = writeBatch(db);
+        allDocs.slice(i, i + 500).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        setTestBusy(`Suppression… ${Math.min(i + 500, allDocs.length)}/${allDocs.length}`);
+      }
+    } catch (e) {
+      alert('Erreur lors de la suppression : ' + e.message);
+    }
     setTestBusy('');
   }
 
