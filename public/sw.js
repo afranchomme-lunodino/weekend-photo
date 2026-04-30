@@ -1,5 +1,5 @@
 // Service Worker — Weekend Photo
-const CACHE = 'wkd-v1';
+const CACHE = 'wkd-v3';
 const PRECACHE = ['/', '/index.html', '/logo.svg', '/manifest.json'];
 
 self.addEventListener('install', e => {
