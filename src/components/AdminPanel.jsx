@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  collection, doc, setDoc, deleteDoc, serverTimestamp,
+  collection, doc, setDoc, updateDoc, deleteDoc, serverTimestamp,
   addDoc, getDocs, writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -36,11 +36,13 @@ export function AdminPanel() {
   const { photos } = usePhotos();
   const { phase, phaseEndTime, setPhase, startTimer, clearTimer } = useSettings();
 
-  const [newTeam,  setNewTeam]  = useState('');
-  const [creating, setCreating] = useState(false);
-  const [copied,   setCopied]   = useState('');
-  const [testBusy, setTestBusy] = useState('');
-  const [timerMin, setTimerMin] = useState('10');
+  const [newTeam,   setNewTeam]   = useState('');
+  const [creating,  setCreating]  = useState(false);
+  const [copied,    setCopied]    = useState('');
+  const [testBusy,  setTestBusy]  = useState('');
+  const [timerMin,  setTimerMin]  = useState('10');
+  const [editingId, setEditingId] = useState(null);
+  const [editName,  setEditName]  = useState('');
 
   const baseUrl = window.location.origin + window.location.pathname;
 
@@ -111,6 +113,13 @@ export function AdminPanel() {
   async function deleteTeam(id) {
     if (!window.confirm('Supprimer cette équipe ?')) return;
     await deleteDoc(doc(db, 'teams', id));
+  }
+
+  async function saveTeamName(id) {
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+    await updateDoc(doc(db, 'teams', id), { name: trimmed });
+    setEditingId(null);
   }
 
   function copyLink(teamId) {
@@ -229,7 +238,31 @@ export function AdminPanel() {
             return (
               <div key={team.id} className="admin-team-row">
                 <div className="admin-team-info">
-                  <strong>{team.name}</strong>
+                  {editingId === team.id ? (
+                    <div className="edit-name-row">
+                      <input
+                        className="edit-name-input"
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') saveTeamName(team.id);
+                          if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        autoFocus
+                      />
+                      <button className="edit-save-btn" onClick={() => saveTeamName(team.id)}>✓</button>
+                      <button className="edit-cancel-btn" onClick={() => setEditingId(null)}>✕</button>
+                    </div>
+                  ) : (
+                    <div className="team-name-row">
+                      <strong>{team.name}</strong>
+                      <button
+                        className="edit-btn"
+                        onClick={() => { setEditingId(team.id); setEditName(team.name); }}
+                        title="Renommer"
+                      >✏️</button>
+                    </div>
+                  )}
                   <div className="admin-team-stats">
                     {teamPhotos} photo{teamPhotos !== 1 ? 's' : ''} · {teamVotes} vote{teamVotes !== 1 ? 's' : ''}
                   </div>

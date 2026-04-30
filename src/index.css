@@ -662,6 +662,65 @@ a      { color: var(--accent); }
   align-items: center;
 }
 
+/* ─── Édition nom d'équipe ───────────────────────────────────── */
+.team-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.edit-btn {
+  background: none;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.edit-btn:hover { opacity: 1; }
+
+.edit-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.edit-name-input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.edit-save-btn {
+  padding: 4px 10px;
+  background: #27ae60;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.edit-cancel-btn {
+  padding: 4px 8px;
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
 .delete-team-btn {
   background: none;
   color: var(--text-muted);
