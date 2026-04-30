@@ -662,6 +662,31 @@ a      { color: var(--accent); }
   align-items: center;
 }
 
+/* ─── Pastilles couleur équipe ──────────────────────────────── */
+.color-swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 5px 0 2px;
+}
+
+.color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.color-swatch:hover  { transform: scale(1.25); }
+.color-swatch.selected {
+  border-color: #111;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 1.5px #fff inset;
+}
+
 /* ─── Édition nom d'équipe ───────────────────────────────────── */
 .team-name-row {
   display: flex;

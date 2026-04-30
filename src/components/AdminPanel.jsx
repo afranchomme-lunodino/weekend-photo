@@ -7,6 +7,7 @@ import { db } from '../lib/firebase';
 import { useTeams } from '../hooks/useTeams';
 import { usePhotos } from '../hooks/usePhotos';
 import { useSettings } from '../hooks/useSettings';
+import { TEAM_COLORS, RAINBOW_GRADIENT } from '../lib/teamColors';
 
 const TEST_PHOTOS = [
   { seed: 10, teamKey: 0 }, { seed: 20, teamKey: 1 }, { seed: 30, teamKey: 2 },
@@ -122,6 +123,10 @@ export function AdminPanel() {
     setEditingId(null);
   }
 
+  async function setTeamColor(teamId, colorIndex) {
+    await updateDoc(doc(db, 'teams', teamId), { colorIndex });
+  }
+
   function copyLink(teamId) {
     const url = `${baseUrl}?team=${teamId}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -229,7 +234,7 @@ export function AdminPanel() {
         )}
 
         <div className="team-list">
-          {teams.map(team => {
+          {teams.map((team, teamIdx) => {
             const teamPhotos = photos.filter(p => p.teamId === team.id).length;
             const teamVotes  = photos
               .filter(p => p.teamId === team.id)
@@ -266,6 +271,23 @@ export function AdminPanel() {
                   <div className="admin-team-stats">
                     {teamPhotos} photo{teamPhotos !== 1 ? 's' : ''} · {teamVotes} vote{teamVotes !== 1 ? 's' : ''}
                   </div>
+
+                  {/* Sélecteur de couleur */}
+                  <div className="color-swatches">
+                    {TEAM_COLORS.map((c, i) => {
+                      const current = typeof team.colorIndex === 'number' ? team.colorIndex : teamIdx;
+                      return (
+                        <button
+                          key={i}
+                          className={`color-swatch ${current === i ? 'selected' : ''}`}
+                          style={{ background: c.rainbow ? RAINBOW_GRADIENT : c.accent }}
+                          onClick={() => setTeamColor(team.id, i)}
+                          title={`Couleur ${i + 1}`}
+                        />
+                      );
+                    })}
+                  </div>
+
                   <div className="admin-link-row">
                     <span className="admin-link-text">?team={team.id}</span>
                     <button className="copy-btn" onClick={() => copyLink(team.id)}>

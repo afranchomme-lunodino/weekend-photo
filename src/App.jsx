@@ -12,16 +12,7 @@ import { Slideshow } from './components/Slideshow';
 import { QRPage } from './components/QRPage';
 import { PodiumReveal } from './components/PodiumReveal';
 
-// Palette par équipe (ordre alphabétique des équipes)
-const TEAM_COLORS = [
-  { accent: '#e74c3c', dark: '#c0392b', light: '#fdeaea', bg: '#fdf6f6', headerText: '#fff' }, // 1 Rouge
-  { accent: '#2980b9', dark: '#1a5276', light: '#d6eaf8', bg: '#f0f6fc', headerText: '#fff' }, // 2 Bleu
-  { accent: '#27ae60', dark: '#1e8449', light: '#d5f5e3', bg: '#f0fdf6', headerText: '#fff' }, // 3 Vert
-  { accent: '#e67e22', dark: '#ca6f1e', light: '#fdebd0', bg: '#fdf6ee', headerText: '#fff' }, // 4 Orange
-  { accent: '#e91e8c', dark: '#c2186e', light: '#fce4f2', bg: '#fdf3f9', headerText: '#fff' }, // 5 Fuschia
-  { accent: '#f1c40f', dark: '#d4ac0d', light: '#fef9e7', bg: '#fffef5', headerText: '#5a3e00', logoFilter: 'brightness(0) saturate(0) opacity(0.6)' }, // 6 Jaune
-  { accent: '#8e44ad', dark: '#6c3483', light: '#f4ecf7', bg: '#fdf8ff', headerText: '#fff', rainbow: true }, // 7 Arc-en-ciel
-];
+import { TEAM_COLORS } from './lib/teamColors';
 
 const params     = new URLSearchParams(window.location.search);
 const isSlideshow = params.has('slideshow');
@@ -44,7 +35,9 @@ function MainApp() {
   // Applique la couleur de l'équipe sur tout le thème CSS
   useEffect(() => {
     if (!currentTeam || teams.length === 0) return;
-    const idx   = teams.findIndex(t => t.id === currentTeam.id);
+    // Priorité : colorIndex explicite défini par l'admin, sinon position alphabétique
+    const fallbackIdx = teams.findIndex(t => t.id === currentTeam.id);
+    const idx   = typeof currentTeam.colorIndex === 'number' ? currentTeam.colorIndex : fallbackIdx;
     const color = TEAM_COLORS[idx % TEAM_COLORS.length];
     const root  = document.documentElement;
     root.style.setProperty('--accent',       color.accent);
