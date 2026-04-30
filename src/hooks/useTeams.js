@@ -7,7 +7,7 @@ export function useTeams() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(collection(db, 'teams'), orderBy('createdAt'));
+    const q = query(collection(db, 'teams'), orderBy('name'));
     return onSnapshot(q, (snap) => {
       setTeams(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
